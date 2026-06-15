@@ -94,7 +94,8 @@ onMounted(async () => {
   try {
     const project = store.state.project;
     const ruleId = route.params.id;
-    taskTypeOptions.value = project.taskTypes.concat([t("common.any")]);
+    const names = (project.taskTypes || []).map(t => typeof t === 'string' ? t : t.name);
+    taskTypeOptions.value = names.concat([t("common.any")]);
     areaOptions.value = project.areas.features.map(feature => feature.properties.id).concat([t("common.any")]);
     intervalOptions.value = project.timeIntervals.map(ti => ti.name).concat([t("common.any")]);
 

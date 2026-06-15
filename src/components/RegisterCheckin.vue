@@ -78,9 +78,14 @@
             <v-select
                 :label="$t('checkin.task_type_label')"
                 v-model="form.taskType"
-                :items="props.taskTypes"
+                :items="normalizedTaskTypes"
+                item-title="title"
+                item-value="value"
                 outlined
             ></v-select>
+            <div v-if="selectedTaskTypeDescription" class="mt-n2 mb-4 text-caption" style="color: #666; line-height: 1.4;">
+              <span v-html="renderDescription(selectedTaskTypeDescription)"></span>
+            </div>
 
             <!-- Sección: Imagen (Opcional) -->
             <h4 class="mt-4">{{ $t('checkin.image_label') || 'Fotos de evidencia (máx. 3)' }}</h4>
@@ -202,6 +207,42 @@ const props = defineProps({
   manualLocationEnabled: { type: Boolean, default: true },
   areas: { type: Object, default: null }
 });
+
+const normalizedTaskTypes = computed(() => {
+  return (props.taskTypes || []).map((t) => {
+    if (typeof t === 'string') {
+      return { title: t, value: t, description: '' };
+    }
+    return { title: t.name, value: t.name, description: t.description || '' };
+  });
+});
+
+const selectedTaskTypeDescription = computed(() => {
+  const selected = normalizedTaskTypes.value.find((t) => t.value === form.value.taskType);
+  return selected ? selected.description : '';
+});
+
+const renderDescription = (text) => {
+  if (!text) return '';
+  let safeText = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+    
+  const mdLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+  safeText = safeText.replace(mdLinkRegex, (match, linkText, url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #4DBA87; text-decoration: underline;">${linkText}</a>`;
+  });
+
+  const rawUrlRegex = /(?<!href=")(https?:\/\/[^\s<]+)/g;
+  safeText = safeText.replace(rawUrlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #4DBA87; text-decoration: underline;">${url}</a>`;
+  });
+
+  return safeText;
+};
 
 const showMapPicker = ref(false);
 

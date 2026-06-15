@@ -127,7 +127,7 @@ onMounted(async () => {
     timeIntervalId: t.timeInterval.name,
     areaId: t.areaGeoJSON?.properties?.id,
   }));
-  taskTypes.value = project.value.taskTypes;
+  taskTypes.value = (project.value.taskTypes || []).map(t => typeof t === 'string' ? t : t.name);
   timeIntervals.value = project.value.timeIntervals.map(ti => ti.name);
   areas.value = project.value.areas.features.map(f => f.properties.id);
 });

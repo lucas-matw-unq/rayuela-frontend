@@ -324,6 +324,7 @@
         "task_types_title": "Tipos de Tarefas",
         "add_task_type_label": "Adicionar novo tipo de tarefa",
         "task_type_placeholder": "Escreva um tipo de tarefa",
+        "task_type_description_label": "Descrição do tipo de tarefa",
         "time_intervals_title": "Intervalos de Tempo",
         "add_time_interval_button": "Adicionar novo intervalo de tempo",
         "new_interval_placeholder": "Novo Intervalo",

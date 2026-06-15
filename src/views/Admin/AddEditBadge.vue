@@ -31,7 +31,11 @@ const defaultBadge = {
 
 const badge = ref({...defaultBadge});
 
-const taskTypeOptions = computed(() => store.getters.project?.taskTypes.concat([t('common.any')]) || []);
+const taskTypeOptions = computed(() => {
+  const types = store.getters.project?.taskTypes || [];
+  const names = types.map(t => typeof t === 'string' ? t : t.name);
+  return names.concat([t('common.any')]);
+});
 const areaOptions = computed(() =>
     store.getters.project?.areas.features.map((feature) => feature.properties.id).concat([t('common.any')]) || []
 );

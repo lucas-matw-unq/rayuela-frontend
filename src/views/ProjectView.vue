@@ -195,8 +195,16 @@
     <h2>{{ $t('project.type_label').replace(':', '') }}</h2>
     <v-card class="pa-4 mb-6">
       <ul>
-        <li v-for="(type, idx) in project.taskTypes" :key="idx">
-          <strong>{{ type }}</strong>
+        <li v-for="(type, idx) in project.taskTypes" :key="idx" class="mb-2">
+          <template v-if="typeof type === 'string'">
+            <strong>{{ type }}</strong>
+          </template>
+          <template v-else>
+            <strong>{{ type.name }}</strong>
+            <div v-if="type.description" class="text-body-2 mt-1" style="color: #666;">
+              <span v-html="renderDescription(type.description)"></span>
+            </div>
+          </template>
         </li>
       </ul>
     </v-card>
@@ -256,6 +264,28 @@ import BadgeDependencyGraph from '@/components/BadgeDependencyGraph.vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
+
+const renderDescription = (text) => {
+  if (!text) return '';
+  let safeText = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+    
+  const mdLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+  safeText = safeText.replace(mdLinkRegex, (match, linkText, url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #4DBA87; text-decoration: underline;">${linkText}</a>`;
+  });
+
+  const rawUrlRegex = /(?<!href=")(https?:\/\/[^\s<]+)/g;
+  safeText = safeText.replace(rawUrlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #4DBA87; text-decoration: underline;">${url}</a>`;
+  });
+
+  return safeText;
+};
 
 const route = useRoute();
 const tasks = ref([]);

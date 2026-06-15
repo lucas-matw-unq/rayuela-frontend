@@ -24,12 +24,16 @@
       <CollapsableSection :title="$t('admin.task_types_title')">
         <p class="text-subtitle-1 mb-3">{{ $t('admin.task_types_table') }}</p>
         <v-row>
-          <v-col cols="10">
+          <v-col cols="12" md="5">
             <v-text-field v-model="newTaskType" :label="$t('admin.add_task_type_label')"
                           :placeholder="$t('admin.task_type_placeholder')"/>
           </v-col>
-          <v-col cols="2">
-            <v-btn color="black" @click="addNewTaskType">{{ $t('common.add') }}</v-btn>
+          <v-col cols="12" md="5">
+            <v-text-field v-model="newTaskTypeDescription" :label="$t('admin.task_type_description_label') || 'Descripción'"
+                          placeholder="Opcional. Permite enlaces."/>
+          </v-col>
+          <v-col cols="12" md="2" class="d-flex align-center">
+            <v-btn color="black" @click="addNewTaskType" block>{{ $t('common.add') }}</v-btn>
           </v-col>
         </v-row>
 
@@ -38,12 +42,20 @@
           <thead>
           <tr>
             <th>{{ $t('admin.task_type') }}</th>
+            <th>{{ $t('admin.task_type_description_label') || 'Descripción' }}</th>
             <th>{{ $t('common.actions') }}</th>
           </tr>
           </thead>
           <tbody>
           <tr v-for="(taskType, index) in project.taskTypes" :key="index">
-            <td>{{ taskType }}</td>
+            <template v-if="typeof taskType === 'string'">
+              <td>{{ taskType }}</td>
+              <td>-</td>
+            </template>
+            <template v-else>
+              <td>{{ taskType.name }}</td>
+              <td><span v-html="renderDescription(taskType.description)"></span></td>
+            </template>
             <td>
               <v-btn icon variant="text" @click="removeTaskType(index)">
                 <v-icon>mdi-delete</v-icon>
@@ -215,7 +227,30 @@ const daysOfWeek = [
 ];
 
 const newTaskType = ref('');
+const newTaskTypeDescription = ref('');
 const isNew = ref(false);
+
+const renderDescription = (text) => {
+  if (!text) return '';
+  let safeText = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+    
+  const mdLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+  safeText = safeText.replace(mdLinkRegex, (match, linkText, url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #4DBA87; text-decoration: underline;">${linkText}</a>`;
+  });
+
+  const rawUrlRegex = /(?<!href=")(https?:\/\/[^\s<]+)/g;
+  safeText = safeText.replace(rawUrlRegex, (url) => {
+    return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #4DBA87; text-decoration: underline;">${url}</a>`;
+  });
+
+  return safeText;
+};
 
 const taskSectionClick = () => {
   saveProject().then((project) => {
@@ -233,11 +268,21 @@ const hasInvalidTimeIntervals = computed(() => {
 });
 
 const addNewTaskType = () => {
-  const taskType = newTaskType.value.trim();
-  if (taskType && !project.value.taskTypes.includes(taskType)) {
-    project.value.taskTypes.push(taskType);
-    toast.success(t("admin.task_type_added_success", { type: taskType }));
-    newTaskType.value = '';
+  const name = newTaskType.value.trim();
+  const description = newTaskTypeDescription.value.trim();
+  if (name) {
+    const exists = project.value.taskTypes.some((t) => {
+      const existingName = typeof t === 'string' ? t : t.name;
+      return existingName.toLowerCase() === name.toLowerCase();
+    });
+    if (!exists) {
+      project.value.taskTypes.push({ name, description });
+      toast.success(t("admin.task_type_added_success", { type: name }));
+      newTaskType.value = '';
+      newTaskTypeDescription.value = '';
+    } else {
+      toast.error(t("admin.task_type_exists_error") || "El tipo de tarea ya existe");
+    }
   }
 };
 
