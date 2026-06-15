@@ -29,8 +29,9 @@
                           :placeholder="$t('admin.task_type_placeholder')"/>
           </v-col>
           <v-col cols="12" md="5">
-            <v-text-field v-model="newTaskTypeDescription" :label="$t('admin.task_type_description_label') || 'Descripción'"
-                          placeholder="Opcional. Permite enlaces."/>
+            <v-text-field v-model="newTaskTypeDescription" :label="$t('admin.task_type_description_label')"
+                          :placeholder="$t('admin.task_type_description_placeholder')"
+                          :hint="$t('admin.task_type_description_hint')" persistent-hint/>
           </v-col>
           <v-col cols="12" md="2" class="d-flex align-center">
             <v-btn color="black" @click="addNewTaskType" block>{{ $t('common.add') }}</v-btn>
@@ -42,7 +43,7 @@
           <thead>
           <tr>
             <th>{{ $t('admin.task_type') }}</th>
-            <th>{{ $t('admin.task_type_description_label') || 'Descripción' }}</th>
+            <th>{{ $t('admin.task_type_description_label') }}</th>
             <th>{{ $t('common.actions') }}</th>
           </tr>
           </thead>

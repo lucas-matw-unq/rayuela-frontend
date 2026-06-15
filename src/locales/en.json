@@ -325,6 +325,8 @@
         "add_task_type_label": "Add new task type",
         "task_type_placeholder": "Write a task type",
         "task_type_description_label": "Task type description",
+        "task_type_description_placeholder": "Optional. E.g. More info on [our site](https://rayuela.org)",
+        "task_type_description_hint": "To show a link with custom text, write [text](https://example.com). E.g. Click [here](https://rayuela.org)",
         "time_intervals_title": "Time Intervals",
         "add_time_interval_button": "Add new time interval",
         "new_interval_placeholder": "New Interval",
