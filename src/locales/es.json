@@ -325,6 +325,8 @@
         "add_task_type_label": "Añadir nuevo tipo de tarea",
         "task_type_placeholder": "Escribe un tipo de tarea",
         "task_type_description_label": "Descripción del tipo de tarea",
+        "task_type_description_placeholder": "Opcional. Ej: Más info en [nuestra web](https://rayuela.org)",
+        "task_type_description_hint": "Para mostrar un enlace con un texto, escribí [texto](https://ejemplo.com). Ej: Hacé click [acá](https://rayuela.org)",
         "time_intervals_title": "Intervalos de Tiempo",
         "add_time_interval_button": "Añadir nuevo intervalo de tiempo",
         "new_interval_placeholder": "Nuevo Intervalo",
