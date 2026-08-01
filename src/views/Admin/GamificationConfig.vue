@@ -159,12 +159,25 @@ const confirmDeleteBadge = (badge) => {
 };
 
 const deleteBadge = async () => {
-  selectedBadge.value.available = !selectedBadge.value.available;
-  await GamificationService.deleteBadge(selectedBadge.value._id).then((res) => {
+  if (!selectedBadge.value?._id) return;
+  try {
+    const res = await GamificationService.deleteBadge(
+      selectedBadge.value._id,
+      route.params.projectId
+    );
     toast.success(t("admin.badge_deleted_success"));
     dialogDisableBadge.value = false;
-    badges.value = res.badges;
-  });
+    badges.value = res.badges || [];
+    if (store.state.currentGamification) {
+      store.commit("setCurrentGamification", {
+        ...store.state.currentGamification,
+        badgesRules: res.badges || [],
+      });
+    }
+  } catch (error) {
+    console.error("Error al eliminar la insignia:", error);
+    toast.error(t("admin.badge_delete_error"));
+  }
 };
 
 const onGraphBadgeClick = (badge) => {
@@ -190,13 +203,25 @@ const confirmDisableScoreRule = (scoreRule) => {
 };
 
 const deleteScoreRule = async () => {
-  await GamificationService.deleteScoreRule(selectedScoreRule.value._id).then(
-    (res) => {
-      toast.success("Regla de puntaje eliminada :)");
-      dialogDisableScoreRule.value = false;
-      scoreRules.value = res.pointRules;
+  if (!selectedScoreRule.value?._id) return;
+  try {
+    const res = await GamificationService.deleteScoreRule(
+      selectedScoreRule.value._id,
+      route.params.projectId
+    );
+    toast.success(t("admin.score_rule_deleted_success"));
+    dialogDisableScoreRule.value = false;
+    scoreRules.value = res.pointRules || [];
+    if (store.state.currentGamification) {
+      store.commit("setCurrentGamification", {
+        ...store.state.currentGamification,
+        pointRules: res.pointRules || [],
+      });
     }
-  );
+  } catch (error) {
+    console.error("Error al eliminar la regla de puntaje:", error);
+    toast.error("Error al eliminar la regla de puntaje");
+  }
 };
 
 const saveGamificationSettings = async () => {

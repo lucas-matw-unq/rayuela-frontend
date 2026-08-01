@@ -3,8 +3,9 @@ import {store} from "@/vuex/state";
 
 class GamificationService extends RayuelaService {
 
-    async deleteBadge(id) {
-        return this.delete(`/gamification/${store.state.project._id}/badge/${id}`);
+    async deleteBadge(id, projectId) {
+        const pId = projectId || store.state.project?._id || store.state.project?.id;
+        return this.delete(`/gamification/${pId}/badge/${id}`);
     }
 
     async getGamification(projectId) {
@@ -31,8 +32,9 @@ class GamificationService extends RayuelaService {
         return this.patch('/gamification/score-rule', body);
     }
 
-    async deleteScoreRule(id) {
-        return this.delete(`/gamification/${store.state.project._id}/score-rule/${id}`);
+    async deleteScoreRule(id, projectId) {
+        const pId = projectId || store.state.project?._id || store.state.project?.id;
+        return this.delete(`/gamification/${pId}/score-rule/${id}`);
     }
 
     getLeaderboardFor(projectId) {

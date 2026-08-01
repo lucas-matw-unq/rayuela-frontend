@@ -348,6 +348,8 @@
         "badge_created_success": "Insígnia criada com sucesso",
         "badge_updated_success": "Insígnia atualizada com sucesso",
         "badge_deleted_success": "Insígnia excluída com sucesso",
+        "badge_delete_error": "Erro ao excluir insígnia",
+        "score_rule_deleted_success": "Regra de pontuação excluída com sucesso",
         "badge_save_error": "Erro ao salvar insígnia",
         "create_badge": "Criar Insígnia",
         "update_badge": "Atualizar Insígnia",

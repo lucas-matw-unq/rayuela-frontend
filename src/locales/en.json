@@ -348,6 +348,8 @@
         "badge_created_success": "Badge created successfully",
         "badge_updated_success": "Badge updated successfully",
         "badge_deleted_success": "Badge deleted successfully",
+        "badge_delete_error": "Error deleting badge",
+        "score_rule_deleted_success": "Score rule deleted successfully",
         "badge_save_error": "Error saving badge",
         "create_badge": "Create Badge",
         "update_badge": "Update Badge",

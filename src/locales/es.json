@@ -348,6 +348,8 @@
         "badge_created_success": "Insignia creada exitosamente",
         "badge_updated_success": "Insignia actualizada exitosamente",
         "badge_deleted_success": "Insignia eliminada exitosamente",
+        "badge_delete_error": "Error al eliminar la insignia",
+        "score_rule_deleted_success": "Regla de puntaje eliminada exitosamente",
         "badge_save_error": "Error al guardar la insignia",
         "create_badge": "Crear Insignia",
         "update_badge": "Actualizar Insignia",
