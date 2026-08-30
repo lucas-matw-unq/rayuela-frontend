@@ -1,5 +1,6 @@
 import './assets/css/main.css'
 import '@mdi/font/css/materialdesignicons.css'; // Importa Material Design Icons
+import 'vue3-toastify/dist/index.css';
 import router from './router'
 import i18n from './i18n'
 import {createApp} from 'vue'
