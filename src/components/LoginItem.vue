@@ -2,7 +2,6 @@
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue3-toastify';
-import 'vue3-toastify/dist/index.css';
 import AuthService from "@/services/AuthService";
 import { useI18n } from 'vue-i18n';
 import GoogleAuthButton from "@/components/GoogleAuthButton.vue";

@@ -121,15 +121,19 @@ const areas = ref([]);
 const editingIndex = ref(null);
 
 onMounted(async () => {
-  project.value = await ProjectsService.getProjectById(projectId);
-  tasks.value = (await TaskService.getTaskForProject(projectId) || []).map(t => ({
+  const [projectData, tasksData] = await Promise.all([
+    ProjectsService.getProjectById(projectId),
+    TaskService.getAdminTasksForProject(projectId),
+  ]);
+  project.value = projectData;
+  tasks.value = (tasksData || []).map(t => ({
     ...t,
-    timeIntervalId: t.timeInterval.name,
-    areaId: t.areaGeoJSON?.properties?.id,
+    timeIntervalId: t.timeInterval?.name || t.timeIntervalId,
+    areaId: t.areaGeoJSON?.properties?.id || t.areaId,
   }));
-  taskTypes.value = (project.value.taskTypes || []).map(t => typeof t === 'string' ? t : t.name);
-  timeIntervals.value = project.value.timeIntervals.map(ti => ti.name);
-  areas.value = project.value.areas.features.map(f => f.properties.id);
+  taskTypes.value = (project.value?.taskTypes || []).map(t => typeof t === 'string' ? t : t.name);
+  timeIntervals.value = (project.value?.timeIntervals || []).map(ti => ti.name);
+  areas.value = (project.value?.areas?.features || []).map(f => f.properties?.id);
 });
 
 const taskDialog = ref(false);
