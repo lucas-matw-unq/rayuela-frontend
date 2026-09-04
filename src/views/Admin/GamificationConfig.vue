@@ -9,13 +9,17 @@ import ProjectsService from "@/services/ProjectsService";
 import BreadCrumb from "@/components/utils/BreadCrumb.vue";
 import BadgeDependencyGraph from "@/components/BadgeDependencyGraph.vue";
 import { useI18n } from "vue-i18n";
+import { BADGE_STATUS, effectiveStatus } from "./badgeFading";
 
 const { t } = useI18n();
 
+// One adaptation at a time, by design. Each option maps onto the backend's
+// two strategy fields; the selector is what keeps them mutually exclusive.
 const ADAPTATION_STRATEGIES = {
   NO_ADAPTATION: "NO_ADAPTATION",
   ELASTIC_POINTS: "ELASTIC_POINTS",
   CHALLENGE_RECOMMENDATION: "CHALLENGE_RECOMMENDATION",
+  BADGE_FADING: "BADGE_FADING",
 };
 
 const badges = ref([]);
@@ -65,7 +69,36 @@ const adaptationStrategyOptions = computed(() => [
     value: ADAPTATION_STRATEGIES.CHALLENGE_RECOMMENDATION,
     description: t("admin.adaptation_option_recommendation_description"),
   },
+  {
+    title: t("admin.adaptation_option_fading"),
+    value: ADAPTATION_STRATEGIES.BADGE_FADING,
+    description: t("admin.adaptation_option_fading_description"),
+  },
 ]);
+
+// The fading panel only exists while this project is actually running the
+// strategy — an adaptation you did not choose should not be reachable.
+const fadingEnabled = computed(
+  () =>
+    projectSettings.value.gamificationStrategy === "DESVANECIMIENTO"
+);
+
+/**
+ * Windows that are still counting down. Switching adaptation away from
+ * fading does not close them — and it takes the panel away, so the admin
+ * would have no way left to restore those badges. Worth saying out loud
+ * before they save.
+ */
+const openFadingWindows = computed(() =>
+  badges.value.filter((b) => effectiveStatus(b) === BADGE_STATUS.FADED)
+);
+
+const leavingFadingWithOpenWindows = computed(
+  () =>
+    fadingEnabled.value &&
+    selectedAdaptationStrategy.value !== ADAPTATION_STRATEGIES.BADGE_FADING &&
+    openFadingWindows.value.length > 0
+);
 
 const leaderboardOptions = computed(() => [
   {
@@ -95,6 +128,10 @@ const resolveAdaptationStrategy = (project) => {
     return ADAPTATION_STRATEGIES.ELASTIC_POINTS;
   }
 
+  if (project.gamificationStrategy === "DESVANECIMIENTO") {
+    return ADAPTATION_STRATEGIES.BADGE_FADING;
+  }
+
   return ADAPTATION_STRATEGIES.NO_ADAPTATION;
 };
 
@@ -109,6 +146,11 @@ const getAdaptationPayload = (adaptationStrategy) => {
       return {
         gamificationStrategy: "SIN ADAPTACION",
         recommendationStrategy: "ADAPTATIVO",
+      };
+    case ADAPTATION_STRATEGIES.BADGE_FADING:
+      return {
+        gamificationStrategy: "DESVANECIMIENTO",
+        recommendationStrategy: "SIMPLE",
       };
     default:
       return {
@@ -151,6 +193,10 @@ const addBadge = () => {
   router.push(
     `/admin/project/${route.params.projectId}/gamification/badge/new`
   );
+};
+
+const openFadingPanel = () => {
+  router.push(`/admin/project/${route.params.projectId}/gamification/fading`);
 };
 
 const confirmDeleteBadge = (badge) => {
@@ -277,6 +323,18 @@ const saveGamificationSettings = async () => {
           item-value="value"
           required
         />
+        <v-alert
+          v-if="leavingFadingWithOpenWindows"
+          type="warning"
+          variant="tonal"
+          density="compact"
+          class="mb-4"
+          :text="
+            $t('admin.fading_leaving_warning', {
+              count: openFadingWindows.length,
+            })
+          "
+        />
         <div style="display: flex; justify-content: flex-end">
           <v-btn
             color="primary"
@@ -291,7 +349,15 @@ const saveGamificationSettings = async () => {
 
     <!-- Sección de Insignias -->
     <h1>{{ $t("admin.badges") }}</h1>
-    <div style="display: flex; justify-content: flex-end">
+    <div style="display: flex; justify-content: flex-end; gap: 8px">
+      <v-btn
+        v-if="fadingEnabled"
+        variant="tonal"
+        prepend-icon="mdi-timer-sand"
+        @click="openFadingPanel"
+      >
+        {{ $t("admin.fading_title") }}
+      </v-btn>
       <v-btn color="black" @click="addBadge">{{ $t("admin.add_badge") }}</v-btn>
     </div>
     <v-container>
