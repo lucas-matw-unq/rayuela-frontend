@@ -3,6 +3,7 @@ import {
   BADGE_STATUS,
   effectiveStatus,
   expiryFromNow,
+  formatInstant,
   formatRemaining,
   isAwardable,
   msRemaining,
@@ -60,6 +61,16 @@ describe('msRemaining', () => {
     expect(msRemaining(badge({ status: 'faded', expiresAt: inDays(-2) }), now)).toBeNull();
     expect(msRemaining(badge(), now)).toBeNull();
   });
+
+  it('reports no countdown for a deadline it cannot read', () => {
+    // effectiveStatus deliberately keeps this badge in `faded`, so the
+    // tolerance has to carry through here: subtracting from an invalid date
+    // is NaN, which used to reach the screen as "Quedan NaN minutos".
+    for (const junk of ['mañana', '', null, undefined, {}, 'not-a-date']) {
+      const b = badge({ status: 'faded', expiresAt: junk });
+      expect(msRemaining(b, now)).toBeNull();
+    }
+  });
 });
 
 describe('formatRemaining', () => {
@@ -80,6 +91,32 @@ describe('formatRemaining', () => {
   it('says the window is closed once time is up', () => {
     expect(formatRemaining(0, t)).toBe('admin.fading_expired:');
     expect(formatRemaining(-5000, t)).toBe('admin.fading_expired:');
+  });
+
+  it('says nothing at all rather than something false', () => {
+    // NaN is the dangerous one: every comparison in the formatter is false
+    // for it, so without an explicit guard it falls through to the minutes
+    // branch and renders "NaN".
+    for (const bad of [null, undefined, NaN, Infinity, -Infinity]) {
+      expect(formatRemaining(bad, t)).toBe('');
+    }
+  });
+});
+
+describe('formatInstant', () => {
+  it('renders a real instant', () => {
+    // Locale-dependent, so only assert that something date-shaped came out.
+    expect(formatInstant(now.toISOString())).not.toBe('—');
+    expect(formatInstant(now.toISOString())).toContain('2026');
+  });
+
+  it('falls back to a placeholder instead of "Invalid Date"', () => {
+    // `new Date(junk).toLocaleString()` is literally the string "Invalid
+    // Date", which is worse than a dash: it looks like data.
+    for (const junk of ['mañana', 'not-a-date', '', null, undefined]) {
+      expect(formatInstant(junk)).toBe('—');
+    }
+    expect(formatInstant('mañana', 'sin fecha')).toBe('sin fecha');
   });
 });
 

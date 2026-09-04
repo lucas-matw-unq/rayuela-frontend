@@ -12,6 +12,7 @@ import {
   WINDOW_PRESETS,
   effectiveStatus,
   expiryFromNow,
+  formatInstant,
   formatRemaining,
   msRemaining,
   pickRandomCandidate,
@@ -138,8 +139,7 @@ function countdown(ms) {
 }
 
 function formatDate(value) {
-  if (!value) return "—";
-  return new Date(value).toLocaleString();
+  return formatInstant(value);
 }
 
 function pickRandom() {
@@ -262,7 +262,10 @@ async function runPendingAction() {
           </template>
           <v-list-item-title>{{ row.name }}</v-list-item-title>
           <v-list-item-subtitle>
-            {{ countdown(row.remaining) }} · {{ formatDate(row.expiresAt) }}
+            <template v-if="countdown(row.remaining)">
+              {{ countdown(row.remaining) }} ·
+            </template>
+            {{ formatDate(row.expiresAt) }}
           </v-list-item-subtitle>
           <template #append>
             <v-btn
@@ -411,7 +414,9 @@ async function runPendingAction() {
             </td>
             <td>
               <template v-if="row.effective === BADGE_STATUS.FADED">
-                <strong>{{ countdown(row.remaining) }}</strong>
+                <strong v-if="countdown(row.remaining)">{{
+                  countdown(row.remaining)
+                }}</strong>
                 <div class="text-caption">{{ formatDate(row.expiresAt) }}</div>
               </template>
               <template v-else-if="row.expiresAt">

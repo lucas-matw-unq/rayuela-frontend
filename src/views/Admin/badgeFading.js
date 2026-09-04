@@ -38,11 +38,19 @@ export function isAwardable(badge, now = new Date()) {
 
 /**
  * Milliseconds left in the window, or null when there is no live countdown.
+ *
+ * `effectiveStatus` deliberately keeps a badge with an unparseable
+ * `expiresAt` in the `faded` state — an admin still has to deal with it. That
+ * tolerance has to reach here too: subtracting from an invalid date yields
+ * NaN, which used to travel all the way to the screen as "Quedan NaN
+ * minutos". No parseable deadline means no countdown, not a broken one.
  */
 export function msRemaining(badge, now = new Date()) {
   if (effectiveStatus(badge, now) !== BADGE_STATUS.FADED) return null;
   if (!badge?.expiresAt) return null;
-  return new Date(badge.expiresAt).getTime() - now.getTime();
+  const deadline = new Date(badge.expiresAt).getTime();
+  if (!Number.isFinite(deadline)) return null;
+  return deadline - now.getTime();
 }
 
 /**
@@ -53,7 +61,10 @@ export function msRemaining(badge, now = new Date()) {
  * and steps the unit down before it could bottom out at a demoralising "0".
  */
 export function formatRemaining(ms, t) {
-  if (ms === null || ms === undefined) return '';
+  // Non-finite input says nothing rather than something false. NaN is the
+  // dangerous one: every comparison below is false for it, so without this
+  // guard it falls through to the minutes branch and renders "NaN minutes".
+  if (!Number.isFinite(ms)) return '';
   if (ms <= 0) return t('admin.fading_expired');
 
   const hours = Math.floor(ms / 3600000);
@@ -77,6 +88,20 @@ export const WINDOW_PRESETS = [
   { key: 'preset_7d', minutes: 60 * 24 * 7 },
   { key: 'preset_14d', minutes: 60 * 24 * 14 },
 ];
+
+/**
+ * A stored instant, rendered for the admin — or [placeholder] when there
+ * isn't a usable one.
+ *
+ * `new Date(junk).toLocaleString()` is the string "Invalid Date", which is
+ * worse than saying nothing: it looks like data.
+ */
+export function formatInstant(value, placeholder = '—') {
+  if (!value) return placeholder;
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return placeholder;
+  return date.toLocaleString();
+}
 
 /** ISO instant [minutes] from now — what the endpoint expects as `expiresAt`. */
 export function expiryFromNow(minutes, now = new Date()) {
