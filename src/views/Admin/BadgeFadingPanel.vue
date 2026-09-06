@@ -30,6 +30,7 @@ const badges = ref([]);
  * a stale tab survives the admin switching strategies elsewhere.
  */
 const strategyEnabled = ref(false);
+const loadFailed = ref(false);
 const loading = ref(true);
 const working = ref(false);
 
@@ -40,16 +41,22 @@ const confirmFade = ref(false);
 const pendingAction = ref(null);
 
 /**
- * Ticks once a second so the countdowns move on screen.
+ * Drives the countdowns on screen.
  *
  * The remaining time is recomputed from `expiresAt` against this clock, never
  * stored — a precomputed "3 days left" is a lie by the next morning.
+ *
+ * Every 15s, not every second: the countdown never shows seconds, so a 1s
+ * tick re-evaluated every computed on this page for a display that cannot
+ * change more than once a minute. Slow enough to stop burning cycles, quick
+ * enough that the last minute of a test window still lands close to right.
  */
+const TICK_MS = 15000;
 const now = ref(new Date());
 let clock = null;
 
 onMounted(async () => {
-  clock = setInterval(() => (now.value = new Date()), 1000);
+  clock = setInterval(() => (now.value = new Date()), TICK_MS);
   await load();
 });
 
@@ -57,6 +64,7 @@ onUnmounted(() => clearInterval(clock));
 
 async function load() {
   loading.value = true;
+  loadFailed.value = false;
   try {
     const [gamification, project] = await Promise.all([
       GamificationService.getGamification(route.params.projectId),
@@ -64,6 +72,15 @@ async function load() {
     ]);
     badges.value = gamification.badgesRules || [];
     strategyEnabled.value = project?.gamificationStrategy === "DESVANECIMIENTO";
+  } catch (error) {
+    // Tracked separately from `strategyEnabled`: a failed request leaves that
+    // flag false, and without this the admin would be told their project is
+    // not running the strategy — a wrong answer to a network problem, and one
+    // they might act on by changing config that was fine all along.
+    loadFailed.value = true;
+    toast.error(
+      error?.response?.data?.message || t("admin.fading_load_error")
+    );
   } finally {
     loading.value = false;
   }
@@ -154,7 +171,13 @@ function pickRandom() {
 
 function askFade() {
   if (!selectedBadgeId.value) return;
-  pendingAction.value = { type: BADGE_STATUS.FADED };
+  // Pin the deadline now. `previewExpiry` rides the ticking clock, so an
+  // admin who pauses on the dialog would read one date and commit another —
+  // the payload used to be recomputed at confirm time.
+  pendingAction.value = {
+    type: BADGE_STATUS.FADED,
+    expiresAt: expiryFromNow(selectedPreset.value, now.value),
+  };
   confirmFade.value = true;
 }
 
@@ -180,7 +203,8 @@ const confirmText = computed(() => {
   }
   return t("admin.fading_confirm_fade", {
     name,
-    date: previewExpiry.value.toLocaleString(),
+    // The instant frozen by askFade, not a live one.
+    date: formatInstant(action.expiresAt),
   });
 });
 
@@ -198,7 +222,7 @@ async function runPendingAction() {
       action.type,
       action.type === BADGE_STATUS.FADED
         ? {
-            expiresAt: expiryFromNow(selectedPreset.value),
+            expiresAt: action.expiresAt,
             fadeReason: fadeReason.value.trim() || undefined,
           }
         : {}
@@ -206,7 +230,13 @@ async function runPendingAction() {
     toast.success(t("admin.fading_action_success"));
     confirmFade.value = false;
     pendingAction.value = null;
-    if (action.type === BADGE_STATUS.FADED) fadeReason.value = "";
+    if (action.type === BADGE_STATUS.FADED) {
+      // Clear the selection too. The badge is `faded` now, so leaving it
+      // selected makes `willRenotify` fire and greets the admin with a
+      // warning about the fade they just successfully started.
+      selectedBadgeId.value = null;
+      fadeReason.value = "";
+    }
     await load();
   } catch (error) {
     // The backend rejects an unknown status and a window that is missing or
@@ -228,10 +258,26 @@ async function runPendingAction() {
       {{ $t("admin.fading_intro") }}
     </p>
 
+    <!-- The load failed: say so and offer a retry. Falling through to the
+         "not the chosen strategy" message would blame the project's config
+         for what is a network problem. -->
+    <v-alert
+      v-if="!loading && loadFailed"
+      type="error"
+      variant="tonal"
+      density="comfortable"
+      class="mb-6"
+    >
+      <div class="mb-3">{{ $t("admin.fading_load_error") }}</div>
+      <v-btn size="small" variant="tonal" @click="load">
+        {{ $t("admin.fading_retry") }}
+      </v-btn>
+    </v-alert>
+
     <!-- Not the chosen adaptation: nothing below applies. Show the way back
          rather than a panel whose buttons would fight the project's config. -->
     <v-alert
-      v-if="!loading && !strategyEnabled"
+      v-if="!loading && !loadFailed && !strategyEnabled"
       type="warning"
       variant="tonal"
       density="comfortable"
