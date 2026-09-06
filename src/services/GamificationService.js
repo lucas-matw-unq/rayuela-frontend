@@ -24,6 +24,25 @@ class GamificationService extends RayuelaService {
         return this.get(`/gamification/${badgeId}`);
     }
 
+    /**
+     * Moves a badge through the fading lifecycle.
+     *
+     *   'faded'   opens the window — `expiresAt` (ISO, must be in the future)
+     *             is required, and `fadeReason` is shown to volunteers next
+     *             to the countdown.
+     *   'expired' closes it immediately.
+     *   'active'  is the manual restitution; it wipes the fade record.
+     *
+     * The backend rejects an unknown status and a window that is missing or
+     * already in the past, so the caller can surface those as-is.
+     */
+    async updateBadgeStatus(projectId, badgeId, status, {expiresAt, fadeReason} = {}) {
+        return this.patch(
+            `/gamification/${projectId}/badge/${badgeId}/status/${status}`,
+            {expiresAt, fadeReason},
+        );
+    }
+
     async createScoreRule(body) {
         return this.post('/gamification/score-rule', body);
     }

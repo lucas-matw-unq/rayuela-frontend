@@ -64,6 +64,10 @@ const gamificationPath = [
     admin, gamification
 ];
 
+const fadingPath = [
+    admin, gamification, { title: t('admin.fading_breadcrumb') }
+];
+
 const projectDetailsPath = [
     admin, projectDetails,
 ];
@@ -80,6 +84,7 @@ const rules = {
   pointRulesPaths,
   badgePath,
   gamificationPath,
+  fadingPath,
   projectDetailsPath,
   taskManagerPath,
   checkinsPath,

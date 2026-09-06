@@ -96,6 +96,13 @@ const router = createRouter({
             meta: { requiresAuth: true },
         },
         {
+            path: '/admin/project/:projectId/gamification/fading',
+            name: 'BadgeFadingPanel',
+            component: () => import('../views/Admin/BadgeFadingPanel.vue'),
+            props: true,
+            meta: { requiresAuth: true },
+        },
+        {
             path: '/admin/project/:projectId/gamification/badge/:id',
             name: 'BadgeConfig',
             component: () => import('../views/Admin/AddEditBadge.vue'),
